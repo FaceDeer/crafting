@@ -1,10 +1,3 @@
-crafting.table = {}
-crafting.table.recipes = {}
-crafting.table.recipes_by_output = {}
-
-local recipes = crafting.table.recipes
-local recipes_by_out = crafting.table.recipes_by_output
-
 local function refresh_output(inv)
 	local craftable = crafting.get_craftable_items("table", inv:get_list("store"))
 	inv:set_size("output", #craftable + ((8*6) - (#craftable%(8*6))))
