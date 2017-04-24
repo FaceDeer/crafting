@@ -1,8 +1,6 @@
 crafting.register = function(typeof, def)
 	if typeof == "furnace" then
 		return crafting.furnace.register(def)
-	elseif typeof == "fuel" then
-		return crafting.furnace.register_fuel(def)
 	end
 	
 	
@@ -16,9 +14,11 @@ crafting.register = function(typeof, def)
 		end
 	end
 
+	-- ensure the destination tables exist
 	crafting.type[typeof] = crafting.type[typeof] or {}
 	crafting.type[typeof].recipes = crafting.type[typeof].recipes or {}
 	crafting.type[typeof].recipes_by_out = crafting.type[typeof].recipes_by_out or {}
+
 	table.insert(crafting.type[typeof].recipes, def)
 	
 	local recipes_by_out = crafting.type[typeof].recipes_by_out
@@ -27,6 +27,40 @@ crafting.register = function(typeof, def)
 		recipes_by_out[item][#recipes_by_out[item]+1] = def
 	end
 	return true
+end
+
+crafting.register_fuel = function(def)
+	-- Strip group: from group names to simplify comparison later
+	local group = string.match(def.name, "^group:(%S+)$")
+	def.name = group or def.name
+
+	crafting.fuel[def.name] = def
+	return true
+end
+
+crafting.is_fuel = function(item)
+	local fuels = crafting.fuel
+	if fuels[item] then
+		return fuels[item]
+	end
+
+	local def = minetest.registered_items[item]
+	if def and def.groups then
+		local max = -1
+		local fuel_group
+		for group, _ in pairs(def.groups) do
+			if fuels[group] then
+				if fuels[group].burntime > max then
+					fuel_group = fuels[group]
+					max = fuel_group.burntime
+				end
+			end
+		end
+		if fuel_group then
+			return fuel_group
+		end
+	end
+	return nil
 end
 
 local function itemlist_to_countlist(inv)

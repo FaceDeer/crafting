@@ -1,5 +1,6 @@
 crafting = {}
 crafting.type = {}
+crafting.fuel = {}
 
 local modpath = minetest.get_modpath("crafting") 
 

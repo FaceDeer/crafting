@@ -80,7 +80,7 @@ minetest.register_craft = function(recipe)
 		legacy.name = recipe.recipe
 		legacy.burntime = recipe.burntime
 		legacy.grade = 1
-		crafting.register("fuel",legacy)
+		crafting.register_fuel(legacy)
 	end
 	return register_craft(recipe)
 end
