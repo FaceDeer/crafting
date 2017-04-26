@@ -59,31 +59,31 @@ minetest.register_node("crafting:table", {
 		meta:set_int("row", 0)
 		meta:set_string("formspec", make_formspec(0, 0))
 	end,
-	allow_metadata_inventory_move = function(pos, flist, fi, tlist, ti, no, player)
-		if tlist == "output" then
+	allow_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, number, player)
+		if to_list == "output" then
 			return 0
 		end
-		return no
+		return number
 	end,
-	allow_metadata_inventory_put = function(pos, lname, i, stack, player)
-		if lname == "output" then
+	allow_metadata_inventory_put = function(pos, list_name, index, stack, player)
+		if list_name == "output" then
 			return 0
 		end
 		return stack:get_count()
 	end,
-	on_metadata_inventory_move = function(pos, flist, fi, tlist, ti, no, player)
+	on_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, number, player)
 		local meta = minetest.get_meta(pos)
-		if flist == "output" and tlist == "store" then
+		if from_list == "output" and to_list == "store" then
 			local inv = meta:get_inventory()
 
-			local stack = inv:get_stack(tlist, ti)
-			local new_stack = inv:get_stack(flist, fi)
+			local stack = inv:get_stack(to_list, to_index)
+			local new_stack = inv:get_stack(from_list, from_index)
 			-- Set count to no, for the use of count_fixes
-			stack:set_count(no)
+			stack:set_count(number)
 			local count, refresh = crafting.count_fixes("table", inv, stack, new_stack, inv, "store", player)
 
 			if not count then
-				count = no
+				count = number
 				refresh = true
 			end
 
@@ -96,11 +96,11 @@ minetest.register_node("crafting:table", {
 		end
 		refresh_inv(meta)
 	end,
-	on_metadata_inventory_take = function(pos, lname, i, stack, player)
+	on_metadata_inventory_take = function(pos, list_name, index, stack, player)
 		local meta = minetest.get_meta(pos)
-		if lname == "output" then
+		if list_name == "output" then
 			local inv = meta:get_inventory()
-			local new_stack = inv:get_stack(lname, i)
+			local new_stack = inv:get_stack(list_name, index)
 			local count, refresh = crafting.count_fixes("table", inv, stack, new_stack, player:get_inventory(), "main", player) 
 
 			if not count then
@@ -117,7 +117,7 @@ minetest.register_node("crafting:table", {
 		end
 		refresh_inv(meta)
 	end,
-	on_metadata_inventory_put = function(pos, lname, i, stack, player)
+	on_metadata_inventory_put = function(pos, list_name, index, stack, player)
 		local meta = minetest.get_meta(pos)
 		refresh_inv(meta)
 	end,

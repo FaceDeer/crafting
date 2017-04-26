@@ -18,6 +18,8 @@ local function create_recipe(legacy)
 	crafting.register("table",recipe)
 end
 
+-- This loop goes through all recipes that have already been registered and
+-- converts them
 for item,_ in pairs(minetest.registered_items) do
 	local crafts = minetest.get_all_craft_recipes(item)
 	if crafts and item ~= "" then
@@ -47,6 +49,8 @@ for item,_ in pairs(minetest.registered_items) do
 	end
 end
 
+-- This replaces the core register_craft method so that any crafts
+-- registered after this one will be added to the new system.
 local register_craft = minetest.register_craft
 minetest.register_craft = function(recipe)
 	if not recipe.type or recipe.type == "shapeless" then

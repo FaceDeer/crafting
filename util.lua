@@ -3,7 +3,6 @@ crafting.register = function(typeof, def)
 		return crafting.furnace.register(def)
 	end
 	
-	
 	def.ret = def.ret or {}
 	-- Strip group: from group names to simplify comparison later
 	for item, count in pairs(def.input) do
@@ -38,12 +37,16 @@ crafting.register_fuel = function(def)
 	return true
 end
 
+-- returns the fuel definition for the item if it is fuel, nil otherwise
 crafting.is_fuel = function(item)
 	local fuels = crafting.fuel
+	
+	-- First check if the item has been explicitly registered as fuel
 	if fuels[item] then
 		return fuels[item]
 	end
 
+	-- Failing that, check its groups.
 	local def = minetest.registered_items[item]
 	if def and def.groups then
 		local max = -1
@@ -51,7 +54,7 @@ crafting.is_fuel = function(item)
 		for group, _ in pairs(def.groups) do
 			if fuels[group] then
 				if fuels[group].burntime > max then
-					fuel_group = fuels[group]
+					fuel_group = fuels[group] -- track whichever is the longest-burning group
 					max = fuel_group.burntime
 				end
 			end
@@ -63,9 +66,10 @@ crafting.is_fuel = function(item)
 	return nil
 end
 
-local function itemlist_to_countlist(inv)
+-- Turns an item list (as returned by inv:get_list) into a form more easily used by crafting functions
+local function itemlist_to_countlist(itemlist)
 	local count_list = {}
-	for _, stack in ipairs(inv) do
+	for _, stack in ipairs(itemlist) do
 		if not stack:is_empty() then
 			local name = stack:get_name()
 			count_list[name] = (count_list[name] or 0) + stack:get_count()
@@ -83,6 +87,7 @@ local function itemlist_to_countlist(inv)
 	return count_list
 end
 
+-- returns the maximum number of output items that can be crafted from the given input_list using the given recipe
 local function get_craft_no(input_list, recipe)
 	-- Recipe without groups (most common node in group instead)
 	local work_recipe = {input = {}, output = table.copy(recipe.output), ret = table.copy(recipe.ret)}
@@ -93,8 +98,7 @@ local function get_craft_no(input_list, recipe)
 		end
 		-- Groups are a string alias to most common member item
 		if type(input_list[item]) == "string" then
-			required_input[input_list[item]] 
-				= (required_input[input_list[item]] or 0) + count
+			required_input[input_list[item]] = (required_input[input_list[item]] or 0) + count
 		else
 			required_input[item] = (required_input[item] or 0) + count
 		end
@@ -135,9 +139,9 @@ local function get_craftable_no(crafting_type, inv, stack)
 	return count
 end
 
+
 crafting.count_fixes = function(crafting_type, inv, stack, new_stack, tinv, tlist, player)
-	if (not new_stack:is_empty() 
-	and new_stack:get_name() ~= stack:get_name())
+	if (not new_stack:is_empty() and new_stack:get_name() ~= stack:get_name())
 	-- Only effective if stack limits are ignored by table
 	-- Stops below fix being triggered incorrectly when swapping
 	or new_stack:get_count() == new_stack:get_stack_max() then
