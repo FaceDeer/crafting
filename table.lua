@@ -1,3 +1,6 @@
+local MP = minetest.get_modpath(minetest.get_current_modname())
+local S, NS = dofile(MP.."/intllib.lua")
+
 local function refresh_output(inv)
 	local craftable = crafting.get_craftable_items("table", inv:get_list("store"))
 	inv:set_size("output", #craftable + ((8*6) - (#craftable%(8*6))))
@@ -13,21 +16,33 @@ local function make_formspec(row, noitems)
 
 	local inventory = {
 		"size[10.2,10.2]"
+		, default.gui_bg
+		, default.gui_bg_img
+		, default.gui_slots
 		, "list[context;store;0,0.5;2,5;]"
 		, "list[context;output;2.2,0;8,6;" , tostring(row*8), "]"
-		, "list[current_player;main;1.1,6.2;8,4;]"
+		, "list[current_player;main;1.1,6.25;8,1;]"
+		, "list[current_player;main;1.1,7.5;8,3;8]"
 		, "listring[context;output]"
 		, "listring[current_player;main]"
 		, "listring[context;store]"
 		, "listring[current_player;main]"
 	}
-	if row >= 6 then
-		inventory[#inventory+1] = "button[9.3,6.7;1,0.75;prev;«]"
-	end
+	
+	local pages = false
+	local page_button_height = "7.3"
 	if noitems > ((row/6)+1) * (8*6) then
-		inventory[#inventory+1] = "button[9.1,6.2;1,0.75;next;»]"
+		inventory[#inventory+1] = "button[9.3,"..page_button_height..";1,0.75;next;»]"
+		page_button_height = "8.0"
+		pages = true
 	end
-	inventory[#inventory+1] = "label[0,6.5;Row " .. tostring(row) .. "]"
+	if row >= 6 then
+		inventory[#inventory+1] = "button[9.3,"..page_button_height..";1,0.75;prev;«]"
+		pages = true
+	end
+	if pages then
+		inventory[#inventory+1] = "label[9.3,6.5;" .. S("Page @1", tostring(row/6+1)) .. "]"
+	end
 
 	return table.concat(inventory), row
 end
@@ -43,7 +58,7 @@ local function refresh_inv(meta)
 end
 
 minetest.register_node("crafting:table", {
-	description = "Crafting Table",
+	description = S("Crafting Table"),
 	drawtype = "normal",
 	tiles = {"crafting.table_top.png", "default_chest_top.png",
 		"crafting.table_front.png", "crafting.table_front.png",
