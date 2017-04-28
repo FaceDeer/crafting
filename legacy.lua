@@ -9,7 +9,7 @@ local function create_recipe(legacy)
 	local nout = stack:get_count()
 	recipe.output = {[output] = nout}
 	recipe.input = {}
-	recipe.ret = legacy.ret
+	recipe.returns = legacy.returns
 	for _,item in ipairs(items) do
 		if item ~= "" then
 			recipe.input[item] = (recipe.input[item] or 0) + 1
@@ -23,29 +23,41 @@ end
 for item,_ in pairs(minetest.registered_items) do
 	local crafts = minetest.get_all_craft_recipes(item)
 	if crafts and item ~= "" then
-		for i,v in ipairs(crafts) do
-			if v.method == "normal" then
-				if v.replacements then
-					v.ret = {}
+		for i,recipe in ipairs(crafts) do
+			if recipe.method == "normal" then
+				if recipe.replacements then
+					recipe.returns = {}
 					local count = {}
-					for _,item in ipairs(v.items) do
+					for _,item in ipairs(recipe.items) do
 						count[item] = (count[item] or 0) + 1
 					end
-					for _,pair in ipairs(v.replacements) do
-						v.ret[pair[2]] = count[pair[1]]
+					for _,pair in ipairs(recipe.replacements) do
+						recipe.returns[pair[2]] = count[pair[1]]
 					end
 				end
-				create_recipe(v,item)
-			elseif v.method == "cooking" then
+				create_recipe(recipe,item)
+			elseif recipe.method == "cooking" then
 				local legacy = {input={},output={}}
-				legacy.output[v.output] = 1
-				legacy.input[v.items[1]] = 1 
-				-- TODO correct detection of time - this is always 3
-				legacy.time = v.time or 3
+				legacy.output[recipe.output] = 1
+				legacy.input[recipe.items[1]] = 1 
+				local cooked = minetest.get_craft_result({method = "cooking", width = 1, items = {recipe.items[1]}})
+				legacy.time = cooked.time
+				
+				-- TODO: may make more sense to leave this nil and have these defaults on the util side
+				legacy.fuel_grade = {}
+				legacy.fuel_grade.min = 0
+				legacy.fuel_grade.max = math.huge	
 				crafting.register("furnace",legacy)
-			-- TODO detection of fuels
 			end
 		end
+	end
+	local fuel = minetest.get_craft_result({method="fuel",width=1,items={item}})
+	if fuel.time ~= 0 then
+		local legacy = {}
+		legacy.name = item
+		legacy.burntime = fuel.time
+		legacy.grade = 1
+		crafting.register_fuel(legacy)
 	end
 end
 
@@ -54,7 +66,7 @@ end
 local register_craft = minetest.register_craft
 minetest.register_craft = function(recipe)
 	if not recipe.type or recipe.type == "shapeless" then
-		local legacy = {items={},ret={},output=recipe.output}
+		local legacy = {items={},returns={},output=recipe.output}
 		local count = {}
 		if not recipe.type then
 			for _,row in ipairs(recipe.recipe) do
@@ -66,7 +78,7 @@ minetest.register_craft = function(recipe)
 			if recipe.replacements then
 				minetest.log("error", recipe.output)
 				for _,pair in ipairs(recipe.replacements) do
-					legacy.ret[pair[2]] = count[pair[1]]
+					legacy.returns[pair[2]] = count[pair[1]]
 				end
 			end
 		elseif recipe.type == "shapeless" then
@@ -78,6 +90,12 @@ minetest.register_craft = function(recipe)
 		legacy.output[recipe.output] = 1
 		legacy.input[recipe.recipe] = 1
 		legacy.time = recipe.cooktime or 3
+		
+		-- TODO: may make more sense to leave this nil and have these defaults on the util side
+		legacy.fuel_grade = {}
+		legacy.fuel_grade.min = 0
+		legacy.fuel_grade.max = math.huge
+		
 		crafting.register("furnace",legacy)
 	elseif recipe.type == "fuel" then
 		local legacy = {}

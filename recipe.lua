@@ -11,7 +11,7 @@ crafting.register("table",{
 	-- Items which the crafting recipe produces, but is not
 	-- formally used to make, e.g. returning an empty bucket
 	-- from a recipe using a water bucket
-	ret = {
+	returns = {
 		["default:stone"] = 1,
 	},
 })
