@@ -261,22 +261,22 @@ crafting.count_list_add = function(list1, list2)
 end
 
 -- Attempts to add the items in count_list to the inventory.
+-- Returns a count list containing the items that couldn't be added.
 crafting.add_items = function(inv, listname, count_list)
-	local old_list = inv:get_list(listname)
-	local leftover = nil
+	local leftover_list = {}
 	
 	for item, count in pairs(count_list) do
-		leftover = inv:add_item(listname, ItemStack({name=item, count=count}))
+		local leftover = inv:add_item(listname, ItemStack({name=item, count=count}))
 		if leftover:get_count() > 0 then
-			inv:set_list(listname, old_list)
-			return false
+			leftover_list[leftover:get_name()] = leftover:get_count()
 		end
 	end
-	return true
+	return leftover_list
 end
 
 -- removes the items in the count_list (formatted as per recipe standards)
--- from the inventory. Returns true on success, false on failure
+-- from the inventory. Returns true on success, false on failure. Does not
+-- affect the inventory on failure (removal is atomic)
 crafting.remove_items = function(inv, listname, count_list)
 	local can_remove = true
 	for item, count in pairs(count_list) do
@@ -292,6 +292,13 @@ crafting.remove_items = function(inv, listname, count_list)
 		return true
 	end
 	return false
+end
+
+-- Drops the contents of a count_list at the given location in the world
+crafting.drop_items = function(pos, count_list)
+	for item, count in pairs(count_list) do
+		minetest.add_item(pos, ItemStack({name=item, count=count}))
+	end
 end
 
 -- Returns a recipe with the inputs and outputs multiplied to match the requested

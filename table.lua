@@ -124,20 +124,25 @@ minetest.register_node("crafting:table", {
 		local meta = minetest.get_meta(pos)
 		if list_name == "output" then
 			local inv = meta:get_inventory()
-			local new_stack = inv:get_stack(list_name, index)
-			local count, refresh = crafting.count_fixes("table", inv, stack, new_stack, player:get_inventory(), "main", player) 
-
-			if not count then
-				count = stack:get_count()
-				refresh = true
+			local craft_result = crafting.get_crafting_result("table", inv:get_list("store"), stack)
+			if craft_result then
+				if crafting.remove_items(inv, "store", craft_result.input) then
+					-- We've successfully paid for this craft's output.
+					
+					-- subtract the amount of output that the player's getting anyway (from having taken it)
+					local item_name = stack:get_name()
+					craft_result.output[item_name] = craft_result.output[item_name] - stack:get_count() 
+				
+					-- stuff the output in the player's inventory, dropping anything that doesn't fit at the player's location
+					local leftover = crafting.add_items(player:get_inventory(), "main", craft_result.output)
+					crafting.drop_items(player:getpos(), leftover)
+				
+					-- Put returns into the store first, or player's inventory if it doesn't fit, or drop it at player's location as final fallback
+					leftover = crafting.add_items(inv, "store", craft_result.returns)
+					leftover = crafting.add_items(player:get_inventory(), "main", leftover)
+					crafting.drop_items(player:getpos(), leftover)
+				end
 			end
-
-			crafting.pay_items("table", inv, stack, player:get_inventory(), "main", player, count)
-
-			if refresh then
-				refresh_inv(meta)
-			end
-			return
 		end
 		refresh_inv(meta)
 	end,
