@@ -103,8 +103,8 @@ local function itemlist_to_countlist(itemlist)
 	return count_list
 end
 
--- returns the maximum number of output items that can be crafted from the given input_list using the given recipe
-local function get_craft_no(input_list, recipe)
+-- returns the number of times the recipe can be crafted from the given input_list
+local function get_craft_count(input_list, recipe)
 	-- Recipe without groups (most common node in group instead)
 	local work_recipe = table.copy(recipe)
 	work_recipe.input = {}
@@ -120,20 +120,20 @@ local function get_craft_no(input_list, recipe)
 			required_input[item] = (required_input[item] or 0) + count
 		end
 	end
-	local no = math.huge
+	local number = math.huge
 	for ingredient, count in pairs(required_input) do
 		local max = input_list[ingredient] / count
 		if max < 1 then
 			return 0
-		elseif max < no then
-			no = max
+		elseif max < number then
+			number = max
 		end
 	end
-	-- Return no of possible crafts as integer
-	return math.floor(no), work_recipe
+	-- Return number of possible crafts as integer
+	return math.floor(number), work_recipe
 end
 
-local function get_craftable_no(crafting_type, inv, stack)
+local function get_craftable_number(crafting_type, inv, stack)
 	local recipes_by_out = crafting.type[crafting_type].recipes_by_out
 	-- Re-calculate the no. items in the stack
 	-- This is used in both fixes		
@@ -141,7 +141,7 @@ local function get_craftable_no(crafting_type, inv, stack)
 	local no_per_out = 1
 	local name = stack:get_name()
 	for i = 1, #recipes_by_out[name] do
-		local out, recipe = get_craft_no(itemlist_to_countlist(inv:get_list("store")), recipes_by_out[name][i])
+		local out, recipe = get_craft_count(itemlist_to_countlist(inv:get_list("store")), recipes_by_out[name][i])
 		if out > 0 and out * recipe.output[name] > count then
 			count = out * recipe.output[name]
 			no_per_out = recipe.output[name]
@@ -156,45 +156,13 @@ local function get_craftable_no(crafting_type, inv, stack)
 	return count
 end
 
-
-crafting.count_fixes = function(crafting_type, inv, stack, new_stack, tinv, tlist, player)
-	if (not new_stack:is_empty() and new_stack:get_name() ~= stack:get_name())
-	-- Only effective if stack limits are ignored by table
-	-- Stops below fix being triggered incorrectly when swapping
-	or new_stack:get_count() == new_stack:get_stack_max() then
-		local excess = tinv:add_item(tlist, new_stack)
-		if not excess:is_empty() then
-			minetest.item_drop(excess, player, player:getpos())
-		end
-
-		-- Delay re-calculation until items are back in input inv
-		local count = get_craftable_no(crafting_type, inv, stack)
-
-		-- Whole stack has been taken - calculate how many
-		return count, true
-	end
-
-	-- Delay re-calculation as condition above may cause items to not be
-	-- in the correct inv
-	local number = get_craftable_no(crafting_type, inv, stack)
-
-	-- Fix for listring movement causing multiple updates with
-	-- incorrect values when trying to move items onto a stack and
-	-- exceeding stack max
-	-- A second update then tries to move the remaining items
-	if (not new_stack:is_empty()
-	and new_stack:get_name() == stack:get_name()
-	and new_stack:get_count() + stack:get_count() > number) then
-		return stack:get_count() - new_stack:get_count(), false
-	end
-end
-
+-- Returns a list of all recipes whose ingredients can be satisfied by the item_list
 crafting.get_craftable_recipes = function(craft_type, item_list)
 	local count_list = itemlist_to_countlist(item_list)
 	local craftable = {}
 	local recipes = crafting.type[craft_type].recipes	
 	for i = 1, #recipes do
-		local number, recipe = get_craft_no(count_list, recipes[i])
+		local number, recipe = get_craft_count(count_list, recipes[i])
 		if number > 0 then
 			table.insert(craftable, recipe)
 		end
@@ -202,40 +170,41 @@ crafting.get_craftable_recipes = function(craft_type, item_list)
 	return craftable
 end
 
-crafting.get_craftable_items = function(craft_type, item_list)
+-- Returns a list of all the possible item stacks that could be crafted from the provided item list
+-- if max_craftable is true the returned stacks will have as many items in them as possible to craft,
+-- if max_craftable is false or nil the returned stacks will have only the minimum output
+crafting.get_craftable_items = function(craft_type, item_list, max_craftable)
 	local count_list = itemlist_to_countlist(item_list)
-	local craftable = {}
-	local chosen = {}
+	local craftable_count_list = {}
+	local craftable_stacks = {}
+	local chosen_recipe = {}
 	local recipes = crafting.type[craft_type].recipes	
 	for i = 1, #recipes do
-		local number, recipe = get_craft_no(count_list, recipes[i])
+		local number, recipe = get_craft_count(count_list, recipes[i])
 		if number > 0 then
+			if not max_craftable then number = 1 end
 			for item, count in pairs(recipe.output) do
-				if craftable[item] and count*number > craftable[item] then
-					craftable[item] = count*number
-					chosen[item] = recipe
-				elseif not craftable[item] and count*number > 0 then
-					craftable[#craftable+1] = item
-					craftable[item] = count*number
-					chosen[item] = recipe
+				if craftable_count_list[item] and count*number > craftable_count_list[item] then
+					craftable_count_list[item] = count*number
+					chosen_recipe[item] = recipe
+				elseif not craftable_count_list[item] and count*number > 0 then
+					craftable_count_list[item] = count*number
+					chosen_recipe[item] = recipe
 				end
 			end
 		end
 	end
 	-- Limit stacks to stack limit
-	for i = 1, #craftable do
-		local item = craftable[i]
-		local count = craftable[item]
+	for item, count in pairs(craftable_count_list) do
 		local stack = ItemStack(item)
 		local max = stack:get_stack_max()
 		if count > max then
-			count = max - max % chosen[item].output[item]
+			count = max - max % chosen_recipe[item].output[item]
 		end
 		stack:set_count(count)
-		craftable[i] = stack
-		craftable[item] = nil
+		table.insert(craftable_stacks, stack)
 	end
-	return craftable
+	return craftable_stacks
 end
 
 -- adds two count lists together, returns a new count list with the sum of the parameters' contents
@@ -285,6 +254,38 @@ crafting.remove_items = function(inv, listname, count_list)
 	return false
 end
 
+crafting.count_fixes = function(crafting_type, inv, stack, new_stack, tinv, tlist, player)
+	if (not new_stack:is_empty() and new_stack:get_name() ~= stack:get_name())
+	-- Only effective if stack limits are ignored by table
+	-- Stops below fix being triggered incorrectly when swapping
+	or new_stack:get_count() == new_stack:get_stack_max() then
+		local excess = tinv:add_item(tlist, new_stack)
+		if not excess:is_empty() then
+			minetest.item_drop(excess, player, player:getpos())
+		end
+
+		-- Delay re-calculation until items are back in input inv
+		local count = get_craftable_number(crafting_type, inv, stack)
+
+		-- Whole stack has been taken - calculate how many
+		return count, true
+	end
+
+	-- Delay re-calculation as condition above may cause items to not be
+	-- in the correct inv
+	local number = get_craftable_number(crafting_type, inv, stack)
+
+	-- Fix for listring movement causing multiple updates with
+	-- incorrect values when trying to move items onto a stack and
+	-- exceeding stack max
+	-- A second update then tries to move the remaining items
+	if (not new_stack:is_empty()
+	and new_stack:get_name() == stack:get_name()
+	and new_stack:get_count() + stack:get_count() > number) then
+		return stack:get_count() - new_stack:get_count(), false
+	end
+end
+
 
 crafting.pay_items = function(crafting_type, inv, crafted, to_inv, to_list, player, no_crafted)
 	local recipes_by_out = crafting.type[crafting_type].recipes_by_out
@@ -303,7 +304,7 @@ crafting.pay_items = function(crafting_type, inv, crafted, to_inv, to_list, play
 
 	-- Get recipe which can craft the most
 	for i = 1, #recipes_by_out[name] do
-		local out, recipe = get_craft_no(itemlist, recipes_by_out[name][i])
+		local out, recipe = get_craft_count(itemlist, recipes_by_out[name][i])
 		if out > 0 and out * recipe.output[name] > max then
 			max = out * recipe.output[name]
 			craft_using = recipe

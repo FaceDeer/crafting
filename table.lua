@@ -2,16 +2,16 @@ local MP = minetest.get_modpath(minetest.get_current_modname())
 local S, NS = dofile(MP.."/intllib.lua")
 
 local function refresh_output(inv)
-	local craftable = crafting.get_craftable_items("table", inv:get_list("store"))
+	local craftable = crafting.get_craftable_items("table", inv:get_list("store"), true)
 	inv:set_size("output", #craftable + ((8*6) - (#craftable%(8*6))))
 	inv:set_list("output", craftable)
 end
 
-local function make_formspec(row, noitems)
-	if noitems < (8*6) then
+local function make_formspec(row, item_count)
+	if item_count < (8*6) then
 		row = 0
-	elseif (row*8)+(8*6) > noitems then
-		row = (noitems - (8*6)) / 8
+	elseif (row*8)+(8*6) > item_count then
+		row = (item_count - (8*6)) / 8
 	end
 
 	local inventory = {
@@ -30,14 +30,16 @@ local function make_formspec(row, noitems)
 	}
 	
 	local pages = false
-	local page_button_height = "7.3"
-	if noitems > ((row/6)+1) * (8*6) then
-		inventory[#inventory+1] = "button[9.3,"..page_button_height..";1,0.75;next;»]"
-		page_button_height = "8.0"
+	local page_button_y = "7.3"
+	if item_count > ((row/6)+1) * (8*6) then
+		inventory[#inventory+1] = "button[9.3,"..page_button_y..";1,0.75;next;»]"
+		inventory[#inventory+1] = "tooltip[next;"..S("Next page of crafting products").."]"
+		page_button_y = "8.0"
 		pages = true
 	end
 	if row >= 6 then
-		inventory[#inventory+1] = "button[9.3,"..page_button_height..";1,0.75;prev;«]"
+		inventory[#inventory+1] = "button[9.3,"..page_button_y..";1,0.75;prev;«]"
+		inventory[#inventory+1] = "tooltip[prev;"..S("Previous page of crafting products").."]"
 		pages = true
 	end
 	if pages then
@@ -93,7 +95,7 @@ minetest.register_node("crafting:table", {
 
 			local stack = inv:get_stack(to_list, to_index)
 			local new_stack = inv:get_stack(from_list, from_index)
-			-- Set count to no, for the use of count_fixes
+			-- Set count to number, for the use of count_fixes
 			stack:set_count(number)
 			local count, refresh = crafting.count_fixes("table", inv, stack, new_stack, inv, "store", player)
 
@@ -142,8 +144,10 @@ minetest.register_node("crafting:table", {
 		local size = inv:get_size("output")
 		local row = meta:get_int("row")
 		if fields.next then
+			minetest.sound_play("paperflip1", {to_player=sender:get_player_name(), gain = 1.0})
 			row = row + 6
 		elseif fields.prev  then
+			minetest.sound_play("paperflip1", {to_player=sender:get_player_name(), gain = 1.0})
 			row = row - 6
 		else
 			return
