@@ -139,4 +139,9 @@ if clear_native_crafting then
 	crafting.legacy_register_craft(table_recipe)
 end
 
-minetest.register_craft(furnace_recipe)
+if clear_native_crafting then
+	minetest.register_alias_force("default:furnace", "crafting:furnace")
+	minetest.register_alias_force("default:furnace_active", "crafting:furnace_active")
+else
+	minetest.register_craft(furnace_recipe)
+end
