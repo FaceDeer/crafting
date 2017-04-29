@@ -1,4 +1,4 @@
-local clear_native_crafting = true
+local clear_native_crafting = false
 
 local function create_recipe(legacy)
 	if not legacy.items[1] then
