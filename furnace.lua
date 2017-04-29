@@ -215,7 +215,6 @@ local function furnace_node_timer(pos, elapsed)
 	local item_percent = 0
 	if cookable then
 		item_percent = math.floor(src_time / cookable.time * 100)
-		minetest.debug("item times", src_time, cookable.time, item_percent)
 		if item_percent > 100 then
 			item_state = S("100% (output full)")
 		else

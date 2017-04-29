@@ -170,6 +170,14 @@ crafting.get_craftable_recipes = function(craft_type, item_list)
 	return craftable
 end
 
+local function compare_stacks_by_desc(stack1, stack2)
+	local item1 = stack1:get_name()
+	local item2 = stack2:get_name()
+	local def1 = minetest.registered_items[item1]
+	local def2 = minetest.registered_items[item2]
+	return def1.description < def2.description
+end
+
 -- Returns a list of all the possible item stacks that could be crafted from the provided item list
 -- if max_craftable is true the returned stacks will have as many items in them as possible to craft,
 -- if max_craftable is false or nil the returned stacks will have only the minimum output
@@ -204,6 +212,7 @@ crafting.get_craftable_items = function(craft_type, item_list, max_craftable)
 		stack:set_count(count)
 		table.insert(craftable_stacks, stack)
 	end
+	table.sort(craftable_stacks, compare_stacks_by_desc)
 	return craftable_stacks
 end
 

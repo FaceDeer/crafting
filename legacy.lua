@@ -1,3 +1,5 @@
+local clear_native_crafting = true
+
 local function create_recipe(legacy)
 	if not legacy.items[1] then
 		return
@@ -50,6 +52,9 @@ for item,_ in pairs(minetest.registered_items) do
 				crafting.register("furnace",legacy)
 			end
 		end
+		if clear_native_crafting then
+			minetest.clear_craft({output=item})
+		end
 	end
 	local fuel = minetest.get_craft_result({method="fuel",width=1,items={item}})
 	if fuel.time ~= 0 then
@@ -58,12 +63,15 @@ for item,_ in pairs(minetest.registered_items) do
 		legacy.burntime = fuel.time
 		legacy.grade = 1
 		crafting.register_fuel(legacy)
+		if clear_native_crafting then
+			minetest.clear_craft({type="fuel", recipe=item})
+		end
 	end
 end
 
 -- This replaces the core register_craft method so that any crafts
 -- registered after this one will be added to the new system.
-local register_craft = minetest.register_craft
+crafting.legacy_register_craft = minetest.register_craft
 minetest.register_craft = function(recipe)
 	if not recipe.type or recipe.type == "shapeless" then
 		local legacy = {items={},returns={},output=recipe.output}
@@ -104,23 +112,31 @@ minetest.register_craft = function(recipe)
 		legacy.grade = 1
 		crafting.register_fuel(legacy)
 	end
-	return register_craft(recipe)
+	if not clear_native_crafting then
+		return crafting.legacy_register_craft(recipe)
+	end
 end
 
-
-minetest.register_craft({
+local table_recipe = {
 	output = "crafting:table",
 	recipe = {
-		{"group:wood","group:wood",""},
-		{"group:wood","group:wood",""},
+		{"group:tree","group:tree",""},
+		{"group:tree","group:tree",""},
 		{"","",""},
 	},
-})
-minetest.register_craft({
+}
+local furnace_recipe = {
 	output = "crafting:furnace",
 	recipe = {
 		{"default:stone","default:stone","default:stone"},
 		{"default:stone","default:coal_lump","default:stone"},
 		{"default:stone","default:stone","default:stone"},
 	},
-})
+}
+
+minetest.register_craft(table_recipe)
+if clear_native_crafting then
+	crafting.legacy_register_craft(table_recipe)
+end
+
+minetest.register_craft(furnace_recipe)
