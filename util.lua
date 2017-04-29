@@ -44,6 +44,35 @@ crafting.register = function(typeof, def)
 	return true
 end
 
+-- Will automatically create and register a "reverse" craft of the same type
+-- Note that this should generally only be done with craft that turn one type
+-- of item into one other type of item. If there's more than one return type
+-- it will use "returns" to give them to the player.
+-- Don't use a recipe that has a "group:" input with this, because obviously that
+-- can't be turned into an output. Script will assert if you try this.
+crafting.register_reversible = function(typeof, forward_def)
+	local reverse_def = table.copy(forward_def) -- copy before registering, registration messes with "group:" prefixes
+	crafting.register(typeof, forward_def)
+
+	local forward_in = reverse_def.input
+	reverse_def.input = crafting.count_list_add(reverse_def.output, reverse_def.returns)
+	
+	local most_common_in_name = ""
+	local most_common_in_count = 0
+	for item, count in pairs(forward_in) do
+		assert(string.sub(item, 1, 6) ~= "group:")
+		if count > most_common_in_count then
+			most_common_in_name = item
+			most_common_in_count = count
+		end
+	end
+	reverse_def.output = {[most_common_in_name]=most_common_in_count}
+	forward_in[most_common_in_name] = nil
+	reverse_def.returns = forward_in
+	
+	crafting.register(typeof, reverse_def)
+end
+
 crafting.register_fuel = function(def)
 	-- Strip group: from group names to simplify comparison later
 	local group = string.match(def.name, "^group:(%S+)$")
@@ -103,7 +132,9 @@ local function itemlist_to_countlist(itemlist)
 	return count_list
 end
 
--- returns the number of times the recipe can be crafted from the given input_list
+-- returns the number of times the recipe can be crafted from the given input_list,
+-- and also a copy of the recipe with groups substituted for the most common item
+-- in the input_list that matches them
 local function get_craft_count(input_list, recipe)
 	-- Recipe without groups (most common node in group instead)
 	local work_recipe = table.copy(recipe)
@@ -261,6 +292,47 @@ crafting.remove_items = function(inv, listname, count_list)
 		return true
 	end
 	return false
+end
+
+-- Returns a recipe with the inputs and outputs multiplied to match the requested
+-- quantity of ouput items in the crafted stack. Note that the output could
+-- actually be larger than crafted_stack if an exactly matching recipe can't be found.
+-- returns nil if crafting is impossible with the given source inventory
+crafting.get_crafting_result = function(crafting_type, input_list, request_stack)
+	local input_count = itemlist_to_countlist(input_list)
+	local request_name = request_stack:get_name()
+	local request_count = request_stack:get_count()
+		
+	local recipes = crafting.type[crafting_type].recipes_by_out[request_name]
+	local smallest_remainder = math.huge
+	local smallest_remainder_output_count = 0
+	local smallest_remainder_recipe = nil
+	for i = 1, #recipes do
+		local number, recipe = get_craft_count(input_count, recipes[i])
+		if number > 0 then
+			local output_count = recipe.output[request_name]
+			if (request_count % output_count) <= smallest_remainder and output_count > smallest_remainder_output_count then
+				smallest_remainder = request_count % output_count
+				smallest_remainder_output_count = output_count
+				smallest_remainder_recipe = recipe
+			end			
+		end
+	end
+
+	if smallest_remainder_recipe then
+		local multiple = math.ceil(request_count / smallest_remainder_recipe.output[request_name])
+		for input_item, quantity in pairs(smallest_remainder_recipe.input) do
+			smallest_remainder_recipe.input[input_item] = multiple * quantity
+		end
+		for output_item, quantity in pairs(smallest_remainder_recipe.output) do
+			smallest_remainder_recipe.output[output_item] = multiple * quantity
+		end
+		for returned_item, quantity in pairs(smallest_remainder_recipe.returns) do
+			smallest_remainder_recipe.returns[returned_item] = multiple * quantity
+		end
+		return smallest_remainder_recipe
+	end
+	return nil
 end
 
 crafting.count_fixes = function(crafting_type, inv, stack, new_stack, tinv, tlist, player)
