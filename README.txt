@@ -1,5 +1,5 @@
 -- Crafting Table
---[[
+
 crafting.register("table",{
 	input = {
 		["group:stone"] = 1,
@@ -16,20 +16,8 @@ crafting.register("table",{
 	},
 })
 
-for i=1,100 do
-	crafting.register("table",{
-		input = {
-			["default:dirt_with_grass"] = 1,
-		},
-		output = {
-			["invalid:thing" .. tostring(i)] = 1,
-		},
-	})
-end
---]]
-
 -- Furnace
---[[
+
 crafting.register("furnace",{
 	input = {
 		-- Must only have one input type, or will be ignored by furnace
@@ -75,4 +63,3 @@ crafting.register("fuel",{
 	burntime = 25.4,
 	grade = 3,
 })
---]]
