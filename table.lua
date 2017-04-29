@@ -1,13 +1,13 @@
 local MP = minetest.get_modpath(minetest.get_current_modname())
 local S, NS = dofile(MP.."/intllib.lua")
 
-local function refresh_output(inv)
-	local craftable = crafting.get_craftable_items("table", inv:get_list("store"), true)
+local function refresh_output(inv, max_mode)
+	local craftable = crafting.get_craftable_items("table", inv:get_list("store"), max_mode)
 	inv:set_size("output", #craftable + ((8*6) - (#craftable%(8*6))))
 	inv:set_list("output", craftable)
 end
 
-local function make_formspec(row, item_count)
+local function make_formspec(row, item_count, max_mode)
 	if item_count < (8*6) then
 		row = 0
 	elseif (row*8)+(8*6) > item_count then
@@ -45,16 +45,23 @@ local function make_formspec(row, item_count)
 	if pages then
 		inventory[#inventory+1] = "label[9.3,6.5;" .. S("Page @1", tostring(row/6+1)) .. "]"
 	end
+	
+	if max_mode then
+		inventory[#inventory+1] = "button[9.3,8.7;1,0.75;max_mode;Max\nOutput]"
+	else
+		inventory[#inventory+1] = "button[9.3,8.7;1,0.75;max_mode;Min\nOutput]"
+	end
 
 	return table.concat(inventory), row
 end
 
 local function refresh_inv(meta)
 	local inv = meta:get_inventory()
-	refresh_output(inv)
+	local max_mode = meta:get_string("max_mode")
+	refresh_output(inv, max_mode == "True")
 
 	local page = meta:get_int("page")
-	local form, page = make_formspec(page, inv:get_size("output"))
+	local form, page = make_formspec(page, inv:get_size("output"), max_mode == "True")
 	meta:set_int("page", page)
 	meta:set_string("formspec", form)
 end
@@ -74,7 +81,7 @@ minetest.register_node("crafting:table", {
 		inv:set_size("store", 2*5)
 		inv:set_size("output", 8*6)
 		meta:set_int("row", 0)
-		meta:set_string("formspec", make_formspec(0, 0))
+		meta:set_string("formspec", make_formspec(0, 0, true))
 	end,
 	allow_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, number, player)
 		if to_list == "output" then
@@ -143,16 +150,30 @@ minetest.register_node("crafting:table", {
 		local inv = meta:get_inventory()
 		local size = inv:get_size("output")
 		local row = meta:get_int("row")
+		local max_mode = meta:get_string("max_mode")
+		local refresh = false
 		if fields.next then
 			minetest.sound_play("paperflip1", {to_player=sender:get_player_name(), gain = 1.0})
 			row = row + 6
 		elseif fields.prev  then
 			minetest.sound_play("paperflip1", {to_player=sender:get_player_name(), gain = 1.0})
 			row = row - 6
+		elseif fields.max_mode then
+			if max_mode == "" then
+				max_mode = "True"
+			else
+				max_mode = ""
+			end
+			refresh = true
 		else
 			return
 		end
-		local form, row = make_formspec(row, size)
+		if refresh then
+			refresh_output(inv, max_mode == "True")
+		end
+		
+		meta:set_string("max_mode", max_mode)
+		local form, row = make_formspec(row, size, max_mode == "True")
 		meta:set_int("row", row)
 		meta:set_string("formspec", form)
 	end,
