@@ -137,12 +137,17 @@ local furnace_recipe = {
 
 minetest.register_craft(table_recipe)
 if clear_native_crafting then
+	-- If we've cleared all native crafting recipes, add the table in so that the player can
+	-- build that and access everything else
 	crafting.legacy_register_craft(table_recipe)
 end
 
 if clear_native_crafting then
+	-- If we've cleared native crafting, there's no point to the default furnace.
+	-- replace it with the crafting: mod furnace.
 	minetest.register_alias_force("default:furnace", "crafting:furnace")
 	minetest.register_alias_force("default:furnace_active", "crafting:furnace_active")
 else
+	-- If we haven't cleared native crafting, leave the existing furnace alone and add the crafting: mod one separately
 	minetest.register_craft(furnace_recipe)
 end
