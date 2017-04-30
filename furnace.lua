@@ -211,7 +211,7 @@ local function furnace_node_timer(pos, elapsed)
 	-- Update formspec, infotext and node
 	--
 	local formspec = inactive_formspec
-	local item_state
+	local item_state = ""
 	local item_percent = 0
 	if cookable then
 		item_percent = math.floor(src_time / cookable.time * 100)
@@ -220,12 +220,8 @@ local function furnace_node_timer(pos, elapsed)
 		else
 			item_state = S("@1%", item_percent)
 		end
-	else
-		if srclist[1]:is_empty() then
-			item_state = S("Empty")
-		else
-			item_state = S("Not cookable")
-		end
+	elseif srclist[1]:is_empty() then
+		item_state = S("Empty")
 	end
 
 	local fuel_state = S("Empty")

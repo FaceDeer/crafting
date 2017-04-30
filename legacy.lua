@@ -1,4 +1,4 @@
-local clear_native_crafting = false
+local clear_default_crafting = crafting.config.clear_default_crafting
 
 local function create_recipe(legacy)
 	if not legacy.items[1] then
@@ -53,7 +53,7 @@ for item,_ in pairs(minetest.registered_items) do
 				crafting.register("furnace",legacy)
 			end
 		end
-		if clear_native_crafting then
+		if clear_default_crafting then
 			minetest.clear_craft({output=item})
 		end
 	end
@@ -64,7 +64,7 @@ for item,_ in pairs(minetest.registered_items) do
 		legacy.burntime = fuel.time
 		legacy.grade = 1
 		crafting.register_fuel(legacy)
-		if clear_native_crafting then
+		if clear_default_crafting then
 			minetest.clear_craft({type="fuel", recipe=item})
 		end
 	end
@@ -72,7 +72,7 @@ end
 
 -- This replaces the core register_craft method so that any crafts
 -- registered after this one will be added to the new system.
-crafting.legacy_register_craft = minetest.register_craft
+crafting.minetest_register_craft = minetest.register_craft
 minetest.register_craft = function(recipe)
 	if not recipe.type or recipe.type == "shapeless" then
 		local legacy = {items={},returns={},output=recipe.output}
@@ -113,8 +113,8 @@ minetest.register_craft = function(recipe)
 		legacy.grade = 1
 		crafting.register_fuel(legacy)
 	end
-	if not clear_native_crafting then
-		return crafting.legacy_register_craft(recipe)
+	if not clear_default_crafting then
+		return crafting.minetest_register_craft(recipe)
 	end
 end
 
@@ -136,13 +136,13 @@ local furnace_recipe = {
 }
 
 minetest.register_craft(table_recipe)
-if clear_native_crafting then
+if clear_default_crafting then
 	-- If we've cleared all native crafting recipes, add the table in so that the player can
 	-- build that and access everything else
-	crafting.legacy_register_craft(table_recipe)
+	crafting.minetest_register_craft(table_recipe)
 end
 
-if clear_native_crafting then
+if clear_default_crafting then
 	-- If we've cleared native crafting, there's no point to the default furnace.
 	-- replace it with the crafting: mod furnace.
 	minetest.register_alias_force("default:furnace", "crafting:furnace")

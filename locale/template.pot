@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-04-28 14:08-0600\n"
+"POT-Creation-Date: 2017-04-29 19:56-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,38 +21,34 @@ msgstr ""
 msgid "Furnace is empty"
 msgstr ""
 
-#: furnace.lua:220
+#: furnace.lua:219
 msgid "100% (output full)"
 msgstr ""
 
-#: furnace.lua:222
-#: furnace.lua:237
+#: furnace.lua:221
+#: furnace.lua:232
 msgid "@1%"
 msgstr ""
 
-#: furnace.lua:226
-#: furnace.lua:232
+#: furnace.lua:224
+#: furnace.lua:227
 msgid "Empty"
 msgstr ""
 
-#: furnace.lua:228
-msgid "Not cookable"
-msgstr ""
-
-#: furnace.lua:244
+#: furnace.lua:239
 msgid "0%"
 msgstr ""
 
-#: furnace.lua:253
+#: furnace.lua:248
 msgid "Furnace active (Item: @1; Fuel: @2)"
 msgstr ""
 
-#: furnace.lua:255
+#: furnace.lua:250
 msgid "Furnace inactive (Item: @1; Fuel: @2)"
 msgstr ""
 
-#: furnace.lua:275
-#: furnace.lua:322
+#: furnace.lua:270
+#: furnace.lua:317
 msgid "Furnace"
 msgstr ""
 
@@ -68,6 +64,10 @@ msgstr ""
 msgid "Page @1"
 msgstr ""
 
-#: table.lua:63
+#: table.lua:78
+msgid "@1 crafts @2"
+msgstr ""
+
+#: table.lua:97
 msgid "Crafting Table"
 msgstr ""

@@ -72,9 +72,12 @@ local function take_craft(inv, target_inv, target_list, stack, player)
 	if craft_result then
 		if crafting.remove_items(inv, "store", craft_result.input) then
 			-- We've successfully paid for this craft's output.
+			local item_name = stack:get_name()
+			
+			-- log it
+			minetest.log("action", S("@1 crafts @2", player:get_player_name(), item_name .. " " .. tostring(craft_result.output[item_name])))
 					
 			-- subtract the amount of output that the player's getting anyway (from having taken it)
-			local item_name = stack:get_name()
 			craft_result.output[item_name] = craft_result.output[item_name] - stack:get_count() 
 			
 			-- stuff the output in the target inventory, or the player's inventory if it doesn't fit, finally dropping anything that doesn't fit at the player's location
