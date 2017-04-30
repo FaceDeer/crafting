@@ -12,8 +12,9 @@ local function create_recipe(legacy)
 	recipe.output = {[output] = nout}
 	recipe.input = {}
 	recipe.returns = legacy.returns
-	for _,item in ipairs(items) do
-		if item ~= "" then
+	for i=1,9 do -- can't use pairs(), the items list can have nils in it
+		local item = items[i]
+		if item and item ~= "" then
 			recipe.input[item] = (recipe.input[item] or 0) + 1
 		end
 	end
@@ -37,7 +38,7 @@ for item,_ in pairs(minetest.registered_items) do
 						recipe.returns[pair[2]] = count[pair[1]]
 					end
 				end
-				create_recipe(recipe,item)
+				create_recipe(recipe)
 			elseif recipe.method == "cooking" then
 				local legacy = {input={},output={}}
 				legacy.output[recipe.output] = 1

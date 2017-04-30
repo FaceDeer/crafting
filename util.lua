@@ -1,5 +1,56 @@
+local function greatest_common_divisor(a, b)
+    local temp
+    while(b > 0) do
+        temp = b
+        b = a % b
+        a = temp
+    end
+    return a
+end
+
+local function gcd_list(list)
+	if #list == 1 then
+		return list[1]
+	end
+	local gcd = list[1]
+	for i=2, #list do
+        gcd = greatest_common_divisor(gcd, list[i])
+	end
+    return gcd
+end
+
+-- divides input, output and returns values by their greatest common divisor
+-- does *not* modify time or any other values
+local function reduce_recipe(def)
+	local list = {}
+	for _, count in pairs(def.input) do
+		table.insert(list, count)
+	end
+	for _, count in pairs(def.output) do
+		table.insert(list, count)
+	end
+	for _, count in pairs(def.returns) do
+		table.insert(list, count)
+	end
+	local gcd = gcd_list(list)
+	if gcd ~= 1 then	
+		for item, count in pairs(def.input) do
+			def.input[item] = count/gcd
+		end
+		for item, count in pairs(def.output) do
+			def.output[item] = count/gcd
+		end
+		for item, count in pairs(def.returns) do
+			def.returns[item] = count/gcd
+		end
+	end
+end
+
 crafting.register = function(typeof, def)
 	def.returns = def.returns or {}
+	
+	reduce_recipe(def)
+	
 	-- Strip group: from group names to simplify comparison later
 	for item, count in pairs(def.input) do
 		local group = string.match(item, "^group:(%S+)$")
@@ -13,26 +64,6 @@ crafting.register = function(typeof, def)
 	crafting.type[typeof] = crafting.type[typeof] or {}
 	crafting.type[typeof].recipes = crafting.type[typeof].recipes or {}
 	crafting.type[typeof].recipes_by_out = crafting.type[typeof].recipes_by_out or {}
-
--- TODO: this was used in the furnace-specific registration but its purpose
--- is unclear.
---	-- Only one input, but pairs is easiest way to find it
---	for item, count in pairs(def.input) do
---		recipes[item] = recipes[item] or {}
---		local inserted = false
---		-- If a recipe is more specific, insert it before other recipe
---		for i, recipe in ipairs(recipes[item]) do
---			if def.fuel_grade.min > recipe.fuel_grade.min
---			or def.fuel_grade.max < recipe.fuel_grade.max then
---				table.insert(recipes[item], i, def)
---				inserted = true
---				break
---			end
---		end
---		if not inserted then
---			recipes[item][#recipes[item] + 1] = def
---		end
---	end
 	
 	table.insert(crafting.type[typeof].recipes, def)
 	
