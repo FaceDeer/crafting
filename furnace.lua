@@ -1,12 +1,12 @@
 local MP = minetest.get_modpath(minetest.get_current_modname())
 local S, NS = dofile(MP.."/intllib.lua")
 
-local recipes = crafting.get_crafting_info("furnace").recipes
+local recipes = crafting_lib.get_crafting_info("furnace").recipes
 local show_guides = crafting.config.show_guides
 local clear_default_crafting = crafting.config.clear_default_crafting
 
 local function is_ingredient(item)
-	local outputs = crafting.get_craftable_recipes("furnace", {ItemStack(item)})
+	local outputs = crafting_lib.get_craftable_recipes("furnace", {ItemStack(item)})
 	if #outputs > 0 then
 		return outputs
 	end
@@ -15,7 +15,7 @@ end
 
 local function get_recipe_name(item_stack)
 	local item = item_stack:get_name()
-	local craftable_recipes = crafting.get_craftable_recipes("furnace", {item_stack})
+	local craftable_recipes = crafting_lib.get_craftable_recipes("furnace", {item_stack})
 	if craftable_recipes then
 		-- there should only be one item, pairs is an easy way to get its key
 		for item_name, _ in pairs(craftable_recipes[1].input) do
@@ -49,14 +49,14 @@ local function sort_input(meta)
 	local item_fuel
 	if not item:is_empty() then
 		item_recipes = is_ingredient(item:get_name())
-		item_fuel = crafting.is_fuel("fuel", item:get_name())
+		item_fuel = crafting_lib.is_fuel("fuel", item:get_name())
 	end
 
 	local fuel_recipes
 	local fuel_fuel
 	if not fuel:is_empty() then
 		fuel_recipes = is_ingredient(fuel:get_name())
-		fuel_fuel = crafting.is_fuel("fuel", fuel:get_name())
+		fuel_fuel = crafting_lib.is_fuel("fuel", fuel:get_name())
 	end
 
 	-- Assume correct combinations first
@@ -93,7 +93,7 @@ end
 
 local function is_recipe(item,fuel)
 	local item_recipes = is_ingredient(item)
-	local fuel_def = crafting.is_fuel("fuel", fuel)
+	local fuel_def = crafting_lib.is_fuel("fuel", fuel)
 	if not item_recipes or not fuel_def then
 		return nil, nil
 	end
@@ -143,7 +143,7 @@ local function set_furnace_state(pos,state)
 end
 
 local function burn_fuel(state)
-	local fuel_def = crafting.is_fuel("fuel", state.fuel:get_name())
+	local fuel_def = crafting_lib.is_fuel("fuel", state.fuel:get_name())
 	
 	-- check if all the returns can fit into output
 	if fuel_def.returns then
@@ -284,7 +284,7 @@ minetest.register_node("crafting:furnace",{
 	end,
 	on_receive_fields = function(pos, formname, fields, sender)
 		if fields.show_guide and show_guides then
-			crafting.show_crafting_guide("furnace", sender)
+			crafting_lib.show_crafting_guide("furnace", sender)
 		end
 	end,
 })
@@ -477,7 +477,7 @@ minetest.register_node("crafting:furnace_active",{
 	end,
 	on_receive_fields = function(pos, formname, fields, sender)
 		if fields.show_guide and show_guides then
-			crafting.show_crafting_guide("furnace", sender)
+			crafting_lib.show_crafting_guide("furnace", sender)
 		end
 	end,
 	on_timer = furnace_timer,
@@ -516,7 +516,7 @@ if show_guides then
 		stack_max = 1,
 		groups = {book = 1},
 		on_use = function(itemstack, user)
-			crafting.show_crafting_guide("furnace", user)
+			crafting_lib.show_crafting_guide("furnace", user)
 		end,
 	})
 	

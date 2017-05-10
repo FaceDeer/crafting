@@ -5,7 +5,7 @@ local alphabetize_items = crafting.config.sort_alphabetically
 local show_guides = crafting.config.show_guides
 
 local function refresh_output(inv, max_mode)
-	local craftable = crafting.get_craftable_items("table", inv:get_list("store"), max_mode, alphabetize_items)
+	local craftable = crafting_lib.get_craftable_items("table", inv:get_list("store"), max_mode, alphabetize_items)
 	inv:set_size("output", #craftable + ((8*6) - (#craftable%(8*6))))
 	inv:set_list("output", craftable)
 end
@@ -75,9 +75,9 @@ end
 
 
 local function take_craft(inv, target_inv, target_list, stack, player)
-	local craft_result = crafting.get_crafting_result("table", inv:get_list("store"), stack)
+	local craft_result = crafting_lib.get_crafting_result("table", inv:get_list("store"), stack)
 	if craft_result then
-		if crafting.remove_items(inv, "store", craft_result.input) then
+		if crafting_lib.remove_items(inv, "store", craft_result.input) then
 			-- We've successfully paid for this craft's output.
 			local item_name = stack:get_name()
 			
@@ -88,16 +88,16 @@ local function take_craft(inv, target_inv, target_list, stack, player)
 			craft_result.output[item_name] = craft_result.output[item_name] - stack:get_count() 
 			
 			-- stuff the output in the target inventory, or the player's inventory if it doesn't fit, finally dropping anything that doesn't fit at the player's location
-			local leftover = crafting.add_items(target_inv, target_list, craft_result.output)
-			leftover = crafting.add_items(player:get_inventory(), "main", leftover)
-			crafting.drop_items(player:getpos(), leftover)
+			local leftover = crafting_lib.add_items(target_inv, target_list, craft_result.output)
+			leftover = crafting_lib.add_items(player:get_inventory(), "main", leftover)
+			crafting_lib.drop_items(player:getpos(), leftover)
 				
 			-- Put returns into the store first, or player's inventory if it doesn't fit, or drop it at player's location as final fallback
 			if craft_result.returns then
-				leftover = crafting.add_items(inv, "store", craft_result.returns)
+				leftover = crafting_lib.add_items(inv, "store", craft_result.returns)
 			end
-			leftover = crafting.add_items(player:get_inventory(), "main", leftover)
-			crafting.drop_items(player:getpos(), leftover)
+			leftover = crafting_lib.add_items(player:get_inventory(), "main", leftover)
+			crafting_lib.drop_items(player:getpos(), leftover)
 		end
 	end
 end
@@ -174,7 +174,7 @@ minetest.register_node("crafting:table", {
 			end
 			refresh = true
 		elseif fields.show_guide and show_guides then
-			crafting.show_crafting_guide("table", sender)
+			crafting_lib.show_crafting_guide("table", sender)
 		else
 			return
 		end
@@ -219,7 +219,7 @@ if crafting.config.show_guides then
 		stack_max = 1,
 		groups = {book = 1},
 		on_use = function(itemstack, user)
-			crafting.show_crafting_guide("table", user)
+			crafting_lib.show_crafting_guide("table", user)
 		end,
 	})
 	
