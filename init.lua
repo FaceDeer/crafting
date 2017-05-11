@@ -8,23 +8,23 @@ dofile(modpath .. "/furnace.lua")
 
 if crafting.config.import_default_recipes then
 
-	crafting_lib.get_legacy_type = function(legacy_method, legacy_recipe)
+	crafting_lib.register_recipe_import_filter(function(legacy_method, legacy_recipe)
 		if legacy_method == "normal" then
-			return "table"
+			return "table", crafting.config.clear_default_crafting
 		elseif legacy_method == "cooking" then
 			legacy_recipe.fuel_grade = {}
 			legacy_recipe.fuel_grade.min = 0
 			legacy_recipe.fuel_grade.max = math.huge
-			return "furnace"
+			return "furnace", crafting.config.clear_default_crafting
 		elseif legacy_method == "fuel" then
 			legacy_recipe.grade = 1
-			return "fuel"
+			return "fuel", crafting.config.clear_default_crafting
 		end
 		minetest.log("error", "get_legacy_type encountered unknown legacy method: "..legacy_method)
 		return nil
-	end
+	end)
 
-	crafting_lib.import_legacy_recipes(crafting.config.clear_default_crafting)
+	crafting_lib.import_legacy_recipes()
 end
 
 if crafting.config.clear_default_crafting then
