@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-05-10 10:25-0600\n"
+"POT-Creation-Date: 2017-05-12 23:43-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -42,14 +42,10 @@ msgstr ""
 msgid "Page @1"
 msgstr ""
 
-#: table.lua:85
-msgid "@1 crafts @2"
-msgstr ""
-
-#: table.lua:106
+#: table.lua:77
 msgid "Crafting Table"
 msgstr ""
 
-#: table.lua:216
+#: table.lua:187
 msgid "Crafting Guide (Table)"
 msgstr ""

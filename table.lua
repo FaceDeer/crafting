@@ -73,35 +73,6 @@ local function refresh_inv(meta)
 	meta:set_string("formspec", form)
 end
 
-
-local function take_craft(inv, target_inv, target_list, stack, player)
-	local craft_result = simplecrafting_lib.get_crafting_result("table", inv:get_list("store"), stack)
-	if craft_result then
-		if simplecrafting_lib.remove_items(inv, "store", craft_result.input) then
-			-- We've successfully paid for this craft's output.
-			local item_name = stack:get_name()
-			
-			-- log it
-			minetest.log("action", S("@1 crafts @2", player:get_player_name(), item_name .. " " .. tostring(craft_result.output[item_name])))
-					
-			-- subtract the amount of output that the player's getting anyway (from having taken it)
-			craft_result.output[item_name] = craft_result.output[item_name] - stack:get_count() 
-			
-			-- stuff the output in the target inventory, or the player's inventory if it doesn't fit, finally dropping anything that doesn't fit at the player's location
-			local leftover = simplecrafting_lib.add_items(target_inv, target_list, craft_result.output)
-			leftover = simplecrafting_lib.add_items(player:get_inventory(), "main", leftover)
-			simplecrafting_lib.drop_items(player:getpos(), leftover)
-				
-			-- Put returns into the store first, or player's inventory if it doesn't fit, or drop it at player's location as final fallback
-			if craft_result.returns then
-				leftover = simplecrafting_lib.add_items(inv, "store", craft_result.returns)
-			end
-			leftover = simplecrafting_lib.add_items(player:get_inventory(), "main", leftover)
-			simplecrafting_lib.drop_items(player:getpos(), leftover)
-		end
-	end
-end
-
 minetest.register_node("crafting:table", {
 	description = S("Crafting Table"),
 	drawtype = "normal",
@@ -137,7 +108,7 @@ minetest.register_node("crafting:table", {
 		if from_list == "output" and to_list == "store" then
 			local inv = meta:get_inventory()
 			local stack = inv:get_stack(to_list, to_index)
-			take_craft(inv, inv, to_list, stack, player)
+			simplecrafting_lib.craft_stack("table", stack, inv, "store", inv, to_list, player)
 		end
 		refresh_inv(meta)
 	end,
@@ -145,7 +116,7 @@ minetest.register_node("crafting:table", {
 		local meta = minetest.get_meta(pos)
 		if list_name == "output" then
 			local inv = meta:get_inventory()
-			take_craft(inv, player:get_inventory(), "main", stack, player)			
+			simplecrafting_lib.craft_stack("table", stack, inv, "store", player:get_inventory(), "main", player)
 		end
 		refresh_inv(meta)
 	end,
