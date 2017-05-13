@@ -8,7 +8,7 @@ dofile(modpath .. "/furnace.lua")
 
 if crafting.config.import_default_recipes then
 
-	crafting_lib.register_recipe_import_filter(function(legacy_method, legacy_recipe)
+	simplecrafting_lib.register_recipe_import_filter(function(legacy_method, legacy_recipe)
 		if legacy_method == "normal" then
 			return "table", crafting.config.clear_default_crafting
 		elseif legacy_method == "cooking" then
@@ -24,14 +24,14 @@ if crafting.config.import_default_recipes then
 		return nil
 	end)
 
-	crafting_lib.import_legacy_recipes()
+	simplecrafting_lib.import_legacy_recipes()
 end
 
 if crafting.config.clear_default_crafting then
 	-- If we've cleared all native crafting recipes, add the table back
 	-- in to the native crafting system so that the player can
 	-- build that and access everything else through it
-	crafting_lib.minetest_register_craft({
+	simplecrafting_lib.minetest_register_craft({
 		output = "crafting:table",
 		recipe = {
 			{"group:tree","group:tree",""},
