@@ -95,13 +95,19 @@ minetest.register_node("crafting:table", {
 		if to_list == "output" then
 			return 0
 		end
+		if to_list == "store" and simplecrafting_lib.is_possible_input("table", stack:get_name()) then
+			return stack:get_count()
+		end
 		return number
 	end,
 	allow_metadata_inventory_put = function(pos, list_name, index, stack, player)
 		if list_name == "output" then
 			return 0
 		end
-		return stack:get_count()
+		if list_name == "store" and simplecrafting_lib.is_possible_input("table", stack:get_name()) then
+			return stack:get_count()
+		end
+		return 0
 	end,
 	on_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, number, player)
 		local meta = minetest.get_meta(pos)
