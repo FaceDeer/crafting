@@ -1,10 +1,10 @@
 local MP = minetest.get_modpath(minetest.get_current_modname())
 local S, NS = dofile(MP.."/intllib.lua")
 
-local alphabetize_items = crafting.config.sort_alphabetically
-local show_guides = crafting.config.show_guides
-
-local table_functions = simplecrafting_lib.generate_table_functions("table", show_guides, alphabetize_items)
+local table_functions = simplecrafting_lib.generate_table_functions("table", {
+	show_guides = crafting.config.show_guides,
+	alphabetize_items = crafting.config.sort_alphabetically,
+})
 
 local table_def = {
 	description = S("Crafting Table"),
