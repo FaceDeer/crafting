@@ -41,35 +41,32 @@ minetest.register_craft(table_recipe)
 ----------------------------------------------------------
 -- Guide
 
-if crafting.config.show_guides then
-	minetest.register_craftitem("crafting:table_guide", {
-		description = S("Crafting Guide (Table)"),
-		inventory_image = "crafting_guide_cover.png^[colorize:#0088ff88^crafting_guide_contents.png",
-		wield_image = "crafting_guide_cover.png^[colorize:#0088ff88^crafting_guide_contents.png",
-		stack_max = 1,
-		groups = {book = 1},
-		on_use = function(itemstack, user)
-			simplecrafting_lib.show_crafting_guide("table", user)
-		end,
-	})
-	
-	if minetest.get_modpath("default") then
-		minetest.register_craft({
-			output = "crafting:table_guide",
-			type = "shapeless",
-			recipe = {"crafting:table", "default:book"},
-			replacements = {{"crafting:table", "crafting:table"}}
-		})
-	end
-end
+simplecrafting_lib.register_crafting_guide_item("crafting:table_guide", "table", {
+	guide_color = "#0088ff",
+	copy_item_to_book = "crafting:table",
+})
 	
 ----------------------------------------------------------------
 -- Hopper compatibility
 
 if minetest.get_modpath("hopper") and hopper ~= nil and hopper.add_container ~= nil then
 	hopper:add_container({
-		{"top", "crafting:table", "store"},
-		{"bottom", "crafting:table", "store"},
-		{"side", "crafting:table", "store"},
+		{"top", "crafting:table", "input"},
+		{"bottom", "crafting:table", "input"},
+		{"side", "crafting:table", "input"},
 	})
 end
+
+minetest.register_lbm({
+	name = "crafting:move_inventory",
+	nodenames = {"crafting:table"},
+	action = function(pos, node)
+		local meta = minetest.get_meta(pos)
+		local inv = meta:get_inventory()
+		local size = inv:get_size("store")
+		local list = inv:get_list("store")
+		inv:set_size("input", size)
+		inv:set_list("input", list)
+		inv:set_size("store", 0)
+	end,
+})
