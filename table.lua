@@ -4,6 +4,8 @@ local S, NS = dofile(MP.."/intllib.lua")
 local table_functions = simplecrafting_lib.generate_table_functions("table", {
 	show_guides = crafting.config.show_guides,
 	alphabetize_items = crafting.config.sort_alphabetically,
+	hopper_node_name = "crafting:table",
+	enable_pipeworks = true,
 })
 
 local table_def = {
@@ -15,7 +17,7 @@ local table_def = {
 	sounds = default.node_sound_wood_defaults(),
 	paramtype2 = "facedir",
 	is_ground_content = false,
-	groups = {oddly_breakable_by_hand = 1, choppy=3},
+	groups = {oddly_breakable_by_hand = 1, choppy=3, tubedevice = 1, tubedevice_receiver = 1},
 }
 
 for k, v in pairs(table_functions) do
@@ -45,17 +47,6 @@ simplecrafting_lib.register_crafting_guide_item("crafting:table_guide", "table",
 	guide_color = "#0088ff",
 	copy_item_to_book = "crafting:table",
 })
-	
-----------------------------------------------------------------
--- Hopper compatibility
-
-if minetest.get_modpath("hopper") and hopper ~= nil and hopper.add_container ~= nil then
-	hopper:add_container({
-		{"top", "crafting:table", "input"},
-		{"bottom", "crafting:table", "input"},
-		{"side", "crafting:table", "input"},
-	})
-end
 
 minetest.register_lbm({
 	name = "crafting:move_inventory",
