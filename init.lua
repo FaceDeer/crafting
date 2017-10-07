@@ -6,9 +6,14 @@ dofile(modpath .. "/config.lua")
 dofile(modpath .. "/table.lua")
 dofile(modpath .. "/furnace.lua")
 
+if crafting.config.enable_autotable then
+	dofile(modpath .. "/autotable.lua")
+end
+
 if crafting.config.import_default_recipes then
 
 	simplecrafting_lib.register_recipe_import_filter(function(legacy_method, legacy_recipe)
+		
 		if legacy_method == "normal" then
 			return "table", crafting.config.clear_default_crafting
 		elseif legacy_method == "cooking" then

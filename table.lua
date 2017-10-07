@@ -6,6 +6,7 @@ local table_functions = simplecrafting_lib.generate_table_functions("table", {
 	alphabetize_items = crafting.config.sort_alphabetically,
 	hopper_node_name = "crafting:table",
 	enable_pipeworks = true,
+	description = S("Crafting Table"),
 })
 
 local table_def = {

@@ -27,3 +27,4 @@ setting("bool", "import_default_recipes", true, "Import default crafting system 
 setting("bool", "clear_default_crafting", false, "Clear default crafting system recipes")
 setting("bool", "sort_alphabetically", false, "Sort crafting output list alphabetically")
 setting("bool", "show_guides", true, "Show crafting guides")
+setting("bool", "enable_autotable", true, "Enable auto-crafting table")
