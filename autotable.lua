@@ -17,6 +17,7 @@ local table_functions = simplecrafting_lib.generate_autocraft_functions("table",
 		end
 		return totalcount
 	end,
+	append_to_formspec = crafting.append_to_formspec,
 })
 
 local table_def = {

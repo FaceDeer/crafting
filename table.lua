@@ -7,6 +7,7 @@ local table_functions = simplecrafting_lib.generate_table_functions("table", {
 	hopper_node_name = "crafting:table",
 	enable_pipeworks = true,
 	description = S("Crafting Table"),
+	append_to_formspec = crafting.append_to_formspec,
 })
 
 local table_def = {
