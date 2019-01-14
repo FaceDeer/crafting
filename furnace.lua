@@ -59,18 +59,6 @@ local function sort_input(meta)
 		fuel_fuel = simplecrafting_lib.is_fuel("fuel", fuel:get_name())
 	end
 
-	-- Assume correct combinations first
-	if item_recipes and fuel_fuel then
-		if get_fueled_recipe(item_recipes,fuel_fuel) then
-			return false
-		end
-	end
-	if fuel_recipes and item_fuel then
-		if get_fueled_recipe(fuel_recipes,item_fuel) then
-			return false
-		end
-	end
-
 	-- Assume one is a correct fuel
 	if fuel_fuel then
 		return false
@@ -97,7 +85,7 @@ local function is_recipe(item,fuel)
 	if not item_recipes or not fuel_def then
 		return nil, nil
 	end
-	return get_fueled_recipe(item_recipes,fuel_def),fuel_def
+	return item_recipes[1], fuel_def
 end
 
 local function swap_furnace(pos)
@@ -187,10 +175,8 @@ local function enough_items(item_stack,recipe)
 end
 
 local function room_for_out(recipe,inv)
-	for output,count in pairs(recipe.output) do
-		if not inv:room_for_item("output",output .. " " .. count) then
-			return false
-		end
+	if not inv:room_for_item("output", recipe.output) then
+		return false
 	end
 	return true
 end
@@ -314,9 +300,7 @@ local function on_timeout(state)
 		return false
 	end
 
-	for output,count in pairs(recipe.output) do
-		state.inv:add_item("output",output .. " " .. count)
-	end
+	state.inv:add_item("output",recipe.output)
 	state.item:set_count(state.item:get_count() - recipe.input[get_recipe_name(state.item)])
 
 	if not room_for_out(recipe,state.inv)
