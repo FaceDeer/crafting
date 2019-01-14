@@ -20,7 +20,7 @@ if crafting.config.import_default_recipes then
 		if legacy_recipe.cooktime ~= nil then
 			return "furnace", crafting.config.clear_default_crafting
 		elseif legacy_recipe.burntime ~= nil then
-			return "fuel", false--crafting.config.clear_default_crafting
+			return "fuel", crafting.config.clear_default_crafting
 		else
 			return "table", crafting.config.clear_default_crafting
 		end
