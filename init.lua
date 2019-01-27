@@ -17,9 +17,9 @@ simplecrafting_lib.set_crafting_guide_def("table", {
 
 if crafting.config.import_default_recipes then
 	simplecrafting_lib.register_recipe_import_filter(function(legacy_recipe)
-		if legacy_recipe.cooktime ~= nil then
+		if legacy_recipe.input["simplecrafting_lib:heat"] then
 			return "furnace", crafting.config.clear_default_crafting
-		elseif legacy_recipe.burntime ~= nil then
+		elseif legacy_recipe.output and legacy_recipe.output:get_name() == "simplecrafting_lib:heat" then
 			return "fuel", crafting.config.clear_default_crafting
 		else
 			return "table", crafting.config.clear_default_crafting
