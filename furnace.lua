@@ -5,8 +5,10 @@ local recipes = simplecrafting_lib.get_crafting_info("furnace").recipes
 local show_guides = crafting.config.show_guides
 local clear_default_crafting = crafting.config.clear_default_crafting
 
+local max_heat = ItemStack({name="simplecrafting_lib:heat",count=9999})
+
 local function is_ingredient(item)
-	local outputs = simplecrafting_lib.get_craftable_recipes("furnace", {ItemStack(item)})
+	local outputs = simplecrafting_lib.get_craftable_recipes("furnace", {ItemStack(item), max_heat})
 	if #outputs > 0 then
 		return outputs
 	end
@@ -15,21 +17,13 @@ end
 
 local function get_recipe_name(item_stack)
 	local item = item_stack:get_name()
-	local craftable_recipes = simplecrafting_lib.get_craftable_recipes("furnace", {item_stack})
+	local craftable_recipes = simplecrafting_lib.get_craftable_recipes("furnace", {item_stack, max_heat})
 	if craftable_recipes then
-		-- there should only be one item, pairs is an easy way to get its key
 		for item_name, _ in pairs(craftable_recipes[1].input) do
-			return item_name
-		end
-	end
-	return nil
-end
-
-local function get_fueled_recipe(item_recipes,fuel)
-	for _,recipe in pairs(item_recipes) do
-		if  fuel.grade >= recipe.fuel_grade.min
-		and fuel.grade <= recipe.fuel_grade.max then
-			return recipe
+			-- there should only be one item other than heat
+			if item_name ~= "simplecrafting_lib:heat" then
+				return item_name
+			end
 		end
 	end
 	return nil
@@ -59,18 +53,6 @@ local function sort_input(meta)
 		fuel_fuel = simplecrafting_lib.is_fuel("fuel", fuel:get_name())
 	end
 
-	-- Assume correct combinations first
-	if item_recipes and fuel_fuel then
-		if get_fueled_recipe(item_recipes,fuel_fuel) then
-			return false
-		end
-	end
-	if fuel_recipes and item_fuel then
-		if get_fueled_recipe(fuel_recipes,item_fuel) then
-			return false
-		end
-	end
-
 	-- Assume one is a correct fuel
 	if fuel_fuel then
 		return false
@@ -93,11 +75,11 @@ end
 
 local function is_recipe(item,fuel)
 	local item_recipes = is_ingredient(item)
-	local fuel_def = simplecrafting_lib.is_fuel("fuel", fuel)
+	local fuel_def = simplecrafting_lib.is_fuel("fuel", fuel)	
 	if not item_recipes or not fuel_def then
 		return nil, nil
 	end
-	return get_fueled_recipe(item_recipes,fuel_def),fuel_def
+	return item_recipes[1], fuel_def
 end
 
 local function swap_furnace(pos)
@@ -159,14 +141,14 @@ local function burn_fuel(state)
 	end
 	
 	state.old_fuel = state.fuel:get_name()
-	state.burntime = fuel_def.burntime
+	state.burntime = fuel_def.output:get_count()
 	state.fuel:set_count(state.fuel:get_count() - 1)
 	return true
 end
 
 local function set_ingredient(state,item,recipe)
 	state.old_item = item:get_name()
-	state.itemtime = recipe.cooktime
+	state.itemtime = recipe.input["simplecrafting_lib:heat"]
 end
 
 local function clear_item(state)
@@ -187,10 +169,8 @@ local function enough_items(item_stack,recipe)
 end
 
 local function room_for_out(recipe,inv)
-	for output,count in pairs(recipe.output) do
-		if not inv:room_for_item("output",output .. " " .. count) then
-			return false
-		end
+	if not inv:room_for_item("output", recipe.output) then
+		return false
 	end
 	return true
 end
@@ -199,19 +179,19 @@ local function try_start(pos)
 	local state = get_furnace_state(pos)
 
 	local recipe,fuel_def = is_recipe(state.item:get_name(),state.fuel:get_name())
-
+	
 	if not recipe
 	or not enough_items(state.item,recipe)
 	or not room_for_out(recipe,state.inv) then
 		return
 	end
-
+	
 	set_ingredient(state,state.item,recipe)
 	if not burn_fuel(state) then
 		return
 	end
 
-	set_timer(pos,recipe.cooktime,fuel_def.burntime)
+	set_timer(pos,recipe.input["simplecrafting_lib:heat"],fuel_def.output:get_count())
 	swap_furnace(pos)
 	set_infotext(state)
 	set_furnace_state(pos,state)
@@ -314,9 +294,7 @@ local function on_timeout(state)
 		return false
 	end
 
-	for output,count in pairs(recipe.output) do
-		state.inv:add_item("output",output .. " " .. count)
-	end
+	state.inv:add_item("output",recipe.output)
 	state.item:set_count(state.item:get_count() - recipe.input[get_recipe_name(state.item)])
 
 	if not room_for_out(recipe,state.inv)
@@ -359,7 +337,7 @@ local function try_change(pos)
 		if old_recipe == recipe then
 			set_ingredient(state,state.item,recipe)
 			state.burntime = state.burntime - timer:get_elapsed()
-			timer:start(math.min(state.burntime,recipe.cooktime))
+			timer:start(math.min(state.burntime,recipe.input["simplecrafting_lib:heat"]))
 			set_infotext(state)
 			set_furnace_state(pos,state)
 			return
@@ -368,7 +346,7 @@ local function try_change(pos)
 				return
 			end
 			set_ingredient(state,state.item,recipe)
-			timer:start(math.min(recipe.cooktime,fuel_def.burntime))
+			timer:start(math.min(recipe.input["simplecrafting_lib:heat"],fuel_def.output:get_count()))
 			set_infotext(state)
 			set_furnace_state(pos,state)
 			return
@@ -382,7 +360,7 @@ local function try_change(pos)
 				return
 			end
 			set_ingredient(state,state.item,recipe)
-			timer:start(math.min(recipe.cooktime,fuel_def.burntime))
+			timer:start(math.min(recipe.input["simplecrafting_lib:heat"],fuel_def.output:get_count()))
 			set_infotext(state)
 			set_furnace_state(pos,state)
 			return

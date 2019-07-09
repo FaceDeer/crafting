@@ -6,6 +6,7 @@ crafting.append_to_formspec = nil -- nil leaves this with default background, "b
 dofile(modpath .. "/config.lua")
 dofile(modpath .. "/table.lua")
 dofile(modpath .. "/furnace.lua")
+dofile(modpath .. "/tool.lua")
 
 if crafting.config.enable_autotable then
 	dofile(modpath .. "/autotable.lua")
@@ -16,23 +17,15 @@ simplecrafting_lib.set_crafting_guide_def("table", {
 })
 
 if crafting.config.import_default_recipes then
-
-	simplecrafting_lib.register_recipe_import_filter(function(legacy_method, legacy_recipe)
-		
-		if legacy_method == "normal" then
-			return "table", crafting.config.clear_default_crafting
-		elseif legacy_method == "cooking" then
-			legacy_recipe.fuel_grade = {}
-			legacy_recipe.fuel_grade.min = 0
-			legacy_recipe.fuel_grade.max = math.huge
+	simplecrafting_lib.register_recipe_import_filter(function(legacy_recipe)
+		if legacy_recipe.input["simplecrafting_lib:heat"] then
 			return "furnace", crafting.config.clear_default_crafting
-		elseif legacy_method == "fuel" then
-			legacy_recipe.grade = 1
+		elseif legacy_recipe.output and legacy_recipe.output:get_name() == "simplecrafting_lib:heat" then
 			return "fuel", crafting.config.clear_default_crafting
+		else
+			return "table", crafting.config.clear_default_crafting
 		end
 	end)
-
-	simplecrafting_lib.import_legacy_recipes()
 end
 
 if crafting.config.clear_default_crafting then
