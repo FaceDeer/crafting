@@ -6,6 +6,7 @@ crafting.append_to_formspec = nil -- nil leaves this with default background, "b
 dofile(modpath .. "/config.lua")
 dofile(modpath .. "/table.lua")
 dofile(modpath .. "/furnace.lua")
+dofile(modpath .. "/tool.lua")
 
 if crafting.config.enable_autotable then
 	dofile(modpath .. "/autotable.lua")
